@@ -25,11 +25,13 @@ Until Track 3 lands an env-flag-gated write surface, the v0 OSS release ships on
 
 ## 3. Input bounds at the Zod boundary
 
-Monetary fields are `z.number().int().positive().max(N)`. There is no unbounded `z.number()` for money in any new payment or cash tool. The bound `N` is `100_000_00` (one hundred thousand dollars, in cents) unless a deployment overrides it via env config — sized to comfortably exceed any legitimate single-check value while bounding worst-case prompt-injection abuse.
+Monetary fields are `z.number().int().positive().max(N)`. There is no unbounded `z.number()` for money in any new payment or cash tool. The bound `N` is `10_000_000` (one hundred thousand dollars, in cents) unless a deployment overrides it via the `TOAST_MAX_MONETARY_CENTS` env var — sized to comfortably exceed any legitimate single-check value while bounding worst-case prompt-injection abuse.
 
-**Why:** RISK-001 and RISK-002 from the 2026-05-27 audit: unbounded `refundAmount` (`src/tools/payments.ts:60`) and unbounded cash entries (`src/tools/cash.ts:77,181`). The fix lives in the schema layer where it's structurally enforced by Zod's runtime validation, not in a separate "validate" function that could be bypassed.
+**Exception** (per ADR-0003): `amount` on `toast_create_cash_entry` is bipolar (the adjacent `type: 'PAID_IN' | 'PAID_OUT'` enum carries the sign, and the upstream schema description explicitly allows negative for PAID_OUT). That field uses bounded magnitude — `z.number().int().refine(n => n !== 0 && Math.abs(n) <= N)` — instead of `.positive()`. All other monetary fields follow the strict positive form.
 
-**Where this lives:** `src/tools/payments.ts`, `src/tools/cash.ts`. Any new monetary tool follows the same pattern.
+**Why:** RISK-001 and RISK-002 from the 2026-05-27 audit, plus RISK-010 (four unaudited monetary fields surfaced during M3 inventory). The fix lives in the schema layer where it's structurally enforced by Zod's runtime validation, not in a separate "validate" function that could be bypassed.
+
+**Where this lives:** `src/lib/monetary.ts` (helpers + env parse), applied to 7 fields across `src/tools/payments.ts`, `src/tools/cash.ts`, `src/tools/menus.ts`. Any new monetary tool follows the same pattern via the helper.
 
 ## 4. Outbound base URL is hardcoded
 
