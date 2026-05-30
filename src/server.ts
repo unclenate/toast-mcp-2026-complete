@@ -124,6 +124,12 @@ export class ToastMCPServer {
     const mode = this.readOnly ? 'read-only' : 'read-write';
     const suffix = skipped.length > 0 ? `, ${skipped.length} write tools skipped` : '';
     console.error(`[Toast MCP] Registered ${this.tools.size} tools (mode: ${mode}${suffix})`);
+    if (this.tools.size === 0) {
+      // Loud at startup so a misconfigured deployment can't silently appear to
+      // be "running" while tools/list returns empty. Most likely cause: every
+      // tool tagged mutates:true (typo, accidental bulk edit) under read-only.
+      console.error('[Toast MCP] WARNING: 0 tools registered — check for stray mutates: true tags on read tools, or an empty toolModules list');
+    }
     if (skipped.length > 0) {
       // Named so a contributor who accidentally tags a read tool with mutates:true
       // can spot it in the log instead of debugging "tool not found" from the client.
@@ -202,7 +208,7 @@ export class ToastMCPServer {
             },
           ],
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error instanceof z.ZodError) {
           throw new Error(`Invalid arguments: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
         }

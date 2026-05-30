@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { ToastMCPServer } from './server.js';
+import { extractErrorInfo } from './lib/error-info.js';
 
 /**
  * Toast MCP Server Entry Point
@@ -96,8 +97,8 @@ async function main() {
             error: 'HTTP tool execution not yet implemented',
             message: 'Use stdio mode for MCP integration',
           });
-        } catch (error: any) {
-          res.status(500).json({ error: error.message });
+        } catch (error: unknown) {
+          res.status(500).json(extractErrorInfo(error));
         }
       });
 
