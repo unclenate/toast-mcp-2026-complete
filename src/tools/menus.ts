@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ToastClient } from '../clients/toast.js';
 import { extractErrorInfo } from '../lib/error-info.js';
+import { positiveCents } from '../lib/monetary.js';
 import type { Menu, MenuGroup, MenuItem, ModifierGroup } from '../types/index.js';
 
 /**
@@ -97,7 +98,7 @@ export function registerMenusTools(client: ToastClient) {
       description: 'Update the price of a menu item',
       inputSchema: z.object({
         itemGuid: z.string(),
-        price: z.number().describe('New price in cents (e.g., 1250 for $12.50)'),
+        price: positiveCents().describe('New price in cents (e.g., 1250 for $12.50)'),
         restaurantGuid: z.string().optional(),
       }),
       handler: async (args: { itemGuid: string; price: number; restaurantGuid?: string }) => {
