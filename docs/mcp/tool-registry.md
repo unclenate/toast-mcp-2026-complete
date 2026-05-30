@@ -16,9 +16,9 @@ These tools call non-idempotent Toast endpoints (POST/PUT/PATCH/DELETE). Each is
 
 | Tool | Module | Toast endpoint shape | Risks |
 | ---- | ------ | -------------------- | ----- |
-| `toast_create_cash_entry` | cash | POST `/cashmgmt/v1/entries` | RISK-002 (unbounded amount) |
+| `toast_create_cash_entry` | cash | POST `/cashmgmt/v1/entries` | RISK-002 — bounded magnitude (ADR-0003) |
 | `toast_void_cash_entry` | cash | DELETE `/cashmgmt/v1/entries/{guid}` | |
-| `toast_create_cash_deposit` | cash | POST `/cashmgmt/v1/deposits` | RISK-002 (unbounded amount) |
+| `toast_create_cash_deposit` | cash | POST `/cashmgmt/v1/deposits` | RISK-002 — bounded positive (ADR-0003) |
 | `toast_create_employee` | employees | POST employee | PII surface |
 | `toast_update_employee` | employees | PATCH employee | PII surface |
 | `toast_disable_employee` | employees | PATCH employee status | |
@@ -34,8 +34,8 @@ These tools call non-idempotent Toast endpoints (POST/PUT/PATCH/DELETE). Each is
 | `toast_void_selection` | orders | POST void selection | |
 | `toast_apply_discount` | orders | POST discount on check | |
 | `toast_update_order_promised_time` | orders | PATCH order | |
-| `toast_add_payment` | payments | POST `/orders/v2/checks/{guid}/payments` | RISK-001 (unbounded amount via downstream) |
-| `toast_refund_payment` | payments | POST `/orders/v2/payments/{guid}/refund` | **RISK-001 (unbounded `refundAmount`)** |
+| `toast_add_payment` | payments | POST `/orders/v2/checks/{guid}/payments` | RISK-001 / RISK-010 — bounded positive (ADR-0003) |
+| `toast_refund_payment` | payments | POST `/orders/v2/payments/{guid}/refund` | RISK-001 / RISK-010 — bounded positive (ADR-0003) |
 | `toast_void_payment` | payments | POST `/orders/v2/payments/{guid}/void` | |
 
 ## Read tools (55)
@@ -62,7 +62,7 @@ All tools use Zod schemas registered at the `inputSchema` field. Runtime validat
 
 **Known gaps (Track 3 fixes):**
 
-- Monetary fields use `z.number()` without `.positive()`, `.int()`, `.max(N)` (RISK-001, RISK-002)
+- ~~Monetary fields use `z.number()` without `.positive()`, `.int()`, `.max(N)` (RISK-001, RISK-002)~~ **RESOLVED 2026-05-30 (ADR-0003, PR #6):** 7 monetary fields now use `positiveCents()` / `boundedMagnitudeCents()` from `src/lib/monetary.ts`, bounded by `MAX_MONETARY_CENTS` (default $100K, env-overridable). Also closed RISK-010.
 - Restaurant GUID is `z.string()` without UUID-shape validation — low risk, since the underlying API rejects malformed GUIDs
 
 ## Schema generation
