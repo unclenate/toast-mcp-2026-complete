@@ -30,6 +30,7 @@ export function registerInventoryTools(client: ToastClient) {
 
     {
       name: 'toast_update_stock_quantity',
+      mutates: true,
       description: 'Update the quantity of an item in stock',
       inputSchema: z.object({
         itemGuid: z.string(),
@@ -52,6 +53,7 @@ export function registerInventoryTools(client: ToastClient) {
 
     {
       name: 'toast_set_infinite_quantity',
+      mutates: true,
       description: 'Mark an item as having infinite quantity (always in stock)',
       inputSchema: z.object({
         itemGuid: z.string(),
@@ -127,6 +129,7 @@ export function registerInventoryTools(client: ToastClient) {
 
     {
       name: 'toast_bulk_update_stock',
+      mutates: true,
       description: 'Update stock quantities for multiple items at once',
       inputSchema: z.object({
         updates: z.array(z.object({

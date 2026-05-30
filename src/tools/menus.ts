@@ -92,6 +92,7 @@ export function registerMenusTools(client: ToastClient) {
 
     {
       name: 'toast_update_item_price',
+      mutates: true,
       description: 'Update the price of a menu item',
       inputSchema: z.object({
         itemGuid: z.string(),
@@ -111,6 +112,7 @@ export function registerMenusTools(client: ToastClient) {
 
     {
       name: 'toast_set_item_86',
+      mutates: true,
       description: 'Mark an item as out of stock (86\'d) or back in stock',
       inputSchema: z.object({
         itemGuid: z.string(),
@@ -229,6 +231,7 @@ export function registerMenusTools(client: ToastClient) {
 
     {
       name: 'toast_bulk_86_items',
+      mutates: true,
       description: 'Mark multiple items as out of stock (86\'d) at once',
       inputSchema: z.object({
         itemGuids: z.array(z.string()),

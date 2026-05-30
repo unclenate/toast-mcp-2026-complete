@@ -27,12 +27,25 @@ interface ToastServerConfig {
   clientSecret: string;
   restaurantGuid?: string;
   environment?: 'production' | 'sandbox';
+  readOnly?: boolean;
+}
+
+// Strict parse of TOAST_READ_ONLY (ADR-0002). Safe-by-default: unknown values warn
+// and default to read-only, so a typo can never silently enable writes.
+export function parseReadOnly(raw: string | undefined): { value: boolean; warning: string | null } {
+  if (raw === undefined || raw === '' || raw === 'true') return { value: true, warning: null };
+  if (raw === 'false') return { value: false, warning: null };
+  return {
+    value: true,
+    warning: `[Toast MCP] TOAST_READ_ONLY=${JSON.stringify(raw)} is not "true" or "false"; defaulting to read-only mode`,
+  };
 }
 
 export class ToastMCPServer {
   private server: Server;
   private client: ToastClient;
   private tools: Map<string, any>;
+  private readOnly: boolean;
 
   constructor(config: ToastServerConfig) {
     this.server = new Server(
@@ -55,6 +68,15 @@ export class ToastMCPServer {
       restaurantGuid: config.restaurantGuid,
       environment: config.environment || 'production',
     });
+
+    // Resolve read-only mode: explicit config wins; otherwise strict env parse (ADR-0002).
+    if (config.readOnly !== undefined) {
+      this.readOnly = config.readOnly;
+    } else {
+      const parsed = parseReadOnly(process.env.TOAST_READ_ONLY);
+      if (parsed.warning) console.error(parsed.warning);
+      this.readOnly = parsed.value;
+    }
 
     // Register all tools from all modules
     this.tools = new Map();
@@ -88,13 +110,20 @@ export class ToastMCPServer {
       registerCashTools(this.client),
     ];
 
+    let skipped = 0;
     for (const tools of toolModules) {
       for (const tool of tools) {
+        if (this.readOnly && (tool as { mutates?: boolean }).mutates === true) {
+          skipped++;
+          continue;
+        }
         this.tools.set(tool.name, tool);
       }
     }
 
-    console.error(`[Toast MCP] Registered ${this.tools.size} tools`);
+    const mode = this.readOnly ? 'read-only' : 'read-write';
+    const suffix = skipped > 0 ? `, ${skipped} write tools skipped` : '';
+    console.error(`[Toast MCP] Registered ${this.tools.size} tools (mode: ${mode}${suffix})`);
   }
 
   private setupHandlers() {

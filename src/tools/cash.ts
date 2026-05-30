@@ -71,6 +71,7 @@ export function registerCashTools(client: ToastClient) {
 
     {
       name: 'toast_create_cash_entry',
+      mutates: true,
       description: 'Record a cash paid in or paid out entry',
       inputSchema: z.object({
         drawerGuid: z.string(),
@@ -135,6 +136,7 @@ export function registerCashTools(client: ToastClient) {
 
     {
       name: 'toast_void_cash_entry',
+      mutates: true,
       description: 'Void/undo a cash entry',
       inputSchema: z.object({
         entryGuid: z.string(),
@@ -176,6 +178,7 @@ export function registerCashTools(client: ToastClient) {
 
     {
       name: 'toast_create_cash_deposit',
+      mutates: true,
       description: 'Record a cash deposit',
       inputSchema: z.object({
         amount: z.number().describe('Deposit amount in cents'),
