@@ -6,11 +6,13 @@ SPDX-License-Identifier: MIT OR Apache-2.0
 # Tool Registry — Toast MCP Server
 
 **Total tools:** 76 (21 write/mutating, 55 read)
-**Source of truth:** `src/tools/*.ts` files, registered via `src/server.ts:77-98`.
+**Source of truth:** `src/tools/*.ts` files, registered via `src/server.ts` `registerAllTools()`.
 
-## Write tools (21) — gated read-only-by-default in v0
+## Write tools (21) — read-only mode: **skipped**
 
-These tools call non-idempotent Toast endpoints (POST/PUT/PATCH/DELETE). They must not be registered when `TOAST_READ_ONLY=true` (Track 3 M2).
+These tools call non-idempotent Toast endpoints (POST/PUT/PATCH/DELETE). Each is tagged `mutates: true` in its module and is **skipped from registration when `TOAST_READ_ONLY` is unset, empty, or `"true"`** (the default). Only the literal env value `"false"` opts in to writes. Per ADR-0002 (PR #2 `ab10399`), implementation landed in PR #3 `467e164`.
+
+**Runtime evidence:** start the server in read-only mode and the startup log emits `Registered 55 tools (mode: read-only, 21 write tools skipped)` followed by `Skipped (read-only): <alphabetically-sorted names>`. Re-tagging a tool flips its presence in this list; mistagging a read tool with `mutates: true` makes it appear in the skipped log so the misclassification is observable from startup.
 
 | Tool | Module | Toast endpoint shape | Risks |
 | ---- | ------ | -------------------- | ----- |
