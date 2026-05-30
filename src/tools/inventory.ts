@@ -144,20 +144,25 @@ export function registerInventoryTools(client: ToastClient) {
         const locGuid = args.locationGuid || restGuid;
         
         const results = await Promise.all(
-          args.updates.map(update =>
-            client.patch(
-              `/stock/v1/items/${update.itemGuid}`,
-              { quantity: update.quantity },
-              { params: { restaurantGuid: restGuid, locationGuid: locGuid } }
-            ).catch(err => ({ error: err.message, itemGuid: update.itemGuid }))
-          )
+          args.updates.map(async update => {
+            try {
+              await client.patch(
+                `/stock/v1/items/${update.itemGuid}`,
+                { quantity: update.quantity },
+                { params: { restaurantGuid: restGuid, locationGuid: locGuid } }
+              );
+              return { ok: true as const, itemGuid: update.itemGuid };
+            } catch (err: any) {
+              return { ok: false as const, error: err?.message ?? String(err), itemGuid: update.itemGuid };
+            }
+          })
         );
 
-        const successful = results.filter(r => !('error' in r));
-        const failed = results.filter(r => 'error' in r);
+        const failed = results.filter(r => !r.ok);
+        const successCount = results.length - failed.length;
 
         return {
-          successCount: successful.length,
+          successCount,
           failCount: failed.length,
           failed,
         };

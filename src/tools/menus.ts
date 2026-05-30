@@ -241,22 +241,27 @@ export function registerMenusTools(client: ToastClient) {
       handler: async (args: { itemGuids: string[]; outOfStock: boolean; restaurantGuid?: string }) => {
         const restGuid = args.restaurantGuid || client.getRestaurantGuid();
         const results = await Promise.all(
-          args.itemGuids.map(itemGuid =>
-            client.patch(
-              `/menus/v2/items/${itemGuid}`,
-              { outOfStock86: args.outOfStock },
-              { params: { restaurantGuid: restGuid } }
-            ).catch(err => ({ error: err.message, itemGuid }))
-          )
+          args.itemGuids.map(async itemGuid => {
+            try {
+              await client.patch(
+                `/menus/v2/items/${itemGuid}`,
+                { outOfStock86: args.outOfStock },
+                { params: { restaurantGuid: restGuid } }
+              );
+              return { ok: true as const, itemGuid };
+            } catch (err: any) {
+              return { ok: false as const, error: err?.message ?? String(err), itemGuid };
+            }
+          })
         );
 
-        const successful = results.filter(r => !('error' in r));
-        const failed = results.filter(r => 'error' in r);
+        const failed = results.filter(r => !r.ok);
+        const successCount = results.length - failed.length;
 
         return {
-          successCount: successful.length,
+          successCount,
           failCount: failed.length,
-          failed: failed,
+          failed,
         };
       },
     },

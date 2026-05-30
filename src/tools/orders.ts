@@ -309,9 +309,8 @@ export function registerOrdersTools(client: ToastClient) {
 
         const matchingOrders = allOrders.filter(order =>
           order.checks.some(check =>
-            check.customer &&
-            (args.phone && check.customer.phone === args.phone) ||
-            (args.email && check.customer.email === args.email)
+            (args.phone && check.customer?.phone === args.phone) ||
+            (args.email && check.customer?.email === args.email)
           )
         );
 
