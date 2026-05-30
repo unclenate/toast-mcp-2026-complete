@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ToastClient } from '../clients/toast.js';
+import { extractErrorInfo } from '../lib/error-info.js';
 import type { StockItem } from '../types/index.js';
 
 /**
@@ -30,6 +31,7 @@ export function registerInventoryTools(client: ToastClient) {
 
     {
       name: 'toast_update_stock_quantity',
+      mutates: true,
       description: 'Update the quantity of an item in stock',
       inputSchema: z.object({
         itemGuid: z.string(),
@@ -52,6 +54,7 @@ export function registerInventoryTools(client: ToastClient) {
 
     {
       name: 'toast_set_infinite_quantity',
+      mutates: true,
       description: 'Mark an item as having infinite quantity (always in stock)',
       inputSchema: z.object({
         itemGuid: z.string(),
@@ -127,6 +130,7 @@ export function registerInventoryTools(client: ToastClient) {
 
     {
       name: 'toast_bulk_update_stock',
+      mutates: true,
       description: 'Update stock quantities for multiple items at once',
       inputSchema: z.object({
         updates: z.array(z.object({
@@ -141,20 +145,25 @@ export function registerInventoryTools(client: ToastClient) {
         const locGuid = args.locationGuid || restGuid;
         
         const results = await Promise.all(
-          args.updates.map(update =>
-            client.patch(
-              `/stock/v1/items/${update.itemGuid}`,
-              { quantity: update.quantity },
-              { params: { restaurantGuid: restGuid, locationGuid: locGuid } }
-            ).catch(err => ({ error: err.message, itemGuid: update.itemGuid }))
-          )
+          args.updates.map(async update => {
+            try {
+              await client.patch(
+                `/stock/v1/items/${update.itemGuid}`,
+                { quantity: update.quantity },
+                { params: { restaurantGuid: restGuid, locationGuid: locGuid } }
+              );
+              return { ok: true as const, itemGuid: update.itemGuid };
+            } catch (err: unknown) {
+              return { ok: false as const, ...extractErrorInfo(err), itemGuid: update.itemGuid };
+            }
+          })
         );
 
-        const successful = results.filter(r => !('error' in r));
-        const failed = results.filter(r => 'error' in r);
+        const successCount = results.filter(r => r.ok).length;
+        const failed = results.filter(r => !r.ok);
 
         return {
-          successCount: successful.length,
+          successCount,
           failCount: failed.length,
           failed,
         };

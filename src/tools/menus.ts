@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ToastClient } from '../clients/toast.js';
+import { extractErrorInfo } from '../lib/error-info.js';
 import type { Menu, MenuGroup, MenuItem, ModifierGroup } from '../types/index.js';
 
 /**
@@ -92,6 +93,7 @@ export function registerMenusTools(client: ToastClient) {
 
     {
       name: 'toast_update_item_price',
+      mutates: true,
       description: 'Update the price of a menu item',
       inputSchema: z.object({
         itemGuid: z.string(),
@@ -111,6 +113,7 @@ export function registerMenusTools(client: ToastClient) {
 
     {
       name: 'toast_set_item_86',
+      mutates: true,
       description: 'Mark an item as out of stock (86\'d) or back in stock',
       inputSchema: z.object({
         itemGuid: z.string(),
@@ -229,6 +232,7 @@ export function registerMenusTools(client: ToastClient) {
 
     {
       name: 'toast_bulk_86_items',
+      mutates: true,
       description: 'Mark multiple items as out of stock (86\'d) at once',
       inputSchema: z.object({
         itemGuids: z.array(z.string()),
@@ -238,22 +242,27 @@ export function registerMenusTools(client: ToastClient) {
       handler: async (args: { itemGuids: string[]; outOfStock: boolean; restaurantGuid?: string }) => {
         const restGuid = args.restaurantGuid || client.getRestaurantGuid();
         const results = await Promise.all(
-          args.itemGuids.map(itemGuid =>
-            client.patch(
-              `/menus/v2/items/${itemGuid}`,
-              { outOfStock86: args.outOfStock },
-              { params: { restaurantGuid: restGuid } }
-            ).catch(err => ({ error: err.message, itemGuid }))
-          )
+          args.itemGuids.map(async itemGuid => {
+            try {
+              await client.patch(
+                `/menus/v2/items/${itemGuid}`,
+                { outOfStock86: args.outOfStock },
+                { params: { restaurantGuid: restGuid } }
+              );
+              return { ok: true as const, itemGuid };
+            } catch (err: unknown) {
+              return { ok: false as const, ...extractErrorInfo(err), itemGuid };
+            }
+          })
         );
 
-        const successful = results.filter(r => !('error' in r));
-        const failed = results.filter(r => 'error' in r);
+        const successCount = results.filter(r => r.ok).length;
+        const failed = results.filter(r => !r.ok);
 
         return {
-          successCount: successful.length,
+          successCount,
           failCount: failed.length,
-          failed: failed,
+          failed,
         };
       },
     },

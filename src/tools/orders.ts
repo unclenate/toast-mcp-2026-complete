@@ -56,6 +56,7 @@ export function registerOrdersTools(client: ToastClient) {
 
     {
       name: 'toast_create_order',
+      mutates: true,
       description: 'Create a new order (online/delivery/takeout). Requires check and selections data.',
       inputSchema: z.object({
         restaurantGuid: z.string().optional(),
@@ -110,6 +111,7 @@ export function registerOrdersTools(client: ToastClient) {
 
     {
       name: 'toast_void_order',
+      mutates: true,
       description: 'Void/cancel an entire order by GUID',
       inputSchema: z.object({
         orderGuid: z.string(),
@@ -146,6 +148,7 @@ export function registerOrdersTools(client: ToastClient) {
 
     {
       name: 'toast_add_selections',
+      mutates: true,
       description: 'Add items/selections to an existing check',
       inputSchema: z.object({
         checkGuid: z.string(),
@@ -172,6 +175,7 @@ export function registerOrdersTools(client: ToastClient) {
 
     {
       name: 'toast_void_selection',
+      mutates: true,
       description: 'Void/remove a specific selection (item) from a check',
       inputSchema: z.object({
         selectionGuid: z.string(),
@@ -191,6 +195,7 @@ export function registerOrdersTools(client: ToastClient) {
 
     {
       name: 'toast_apply_discount',
+      mutates: true,
       description: 'Apply a discount to a check or specific selection',
       inputSchema: z.object({
         checkGuid: z.string(),
@@ -243,6 +248,7 @@ export function registerOrdersTools(client: ToastClient) {
 
     {
       name: 'toast_update_order_promised_time',
+      mutates: true,
       description: 'Update the promised fulfillment time for an order',
       inputSchema: z.object({
         orderGuid: z.string(),
@@ -303,9 +309,8 @@ export function registerOrdersTools(client: ToastClient) {
 
         const matchingOrders = allOrders.filter(order =>
           order.checks.some(check =>
-            check.customer &&
-            (args.phone && check.customer.phone === args.phone) ||
-            (args.email && check.customer.email === args.email)
+            (args.phone && check.customer?.phone === args.phone) ||
+            (args.email && check.customer?.email === args.email)
           )
         );
 

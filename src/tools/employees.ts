@@ -49,6 +49,7 @@ export function registerEmployeesTools(client: ToastClient) {
 
     {
       name: 'toast_create_employee',
+      mutates: true,
       description: 'Create a new employee',
       inputSchema: z.object({
         firstName: z.string(),
@@ -81,6 +82,7 @@ export function registerEmployeesTools(client: ToastClient) {
 
     {
       name: 'toast_update_employee',
+      mutates: true,
       description: 'Update employee information',
       inputSchema: z.object({
         employeeGuid: z.string(),
@@ -111,6 +113,7 @@ export function registerEmployeesTools(client: ToastClient) {
 
     {
       name: 'toast_disable_employee',
+      mutates: true,
       description: 'Disable an employee (prevents login but preserves data)',
       inputSchema: z.object({
         employeeGuid: z.string(),

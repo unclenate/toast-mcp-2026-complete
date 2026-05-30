@@ -27,6 +27,7 @@ export function registerPaymentsTools(client: ToastClient) {
 
     {
       name: 'toast_add_payment',
+      mutates: true,
       description: 'Add a payment to a check (cash, card, other)',
       inputSchema: z.object({
         checkGuid: z.string(),
@@ -54,6 +55,7 @@ export function registerPaymentsTools(client: ToastClient) {
 
     {
       name: 'toast_refund_payment',
+      mutates: true,
       description: 'Process a refund for a payment',
       inputSchema: z.object({
         paymentGuid: z.string(),
@@ -77,6 +79,7 @@ export function registerPaymentsTools(client: ToastClient) {
 
     {
       name: 'toast_void_payment',
+      mutates: true,
       description: 'Void a payment',
       inputSchema: z.object({
         paymentGuid: z.string(),
