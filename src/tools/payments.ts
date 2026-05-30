@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ToastClient } from '../clients/toast.js';
+import { positiveCents } from '../lib/monetary.js';
 import type { Payment, Check } from '../types/index.js';
 
 /**
@@ -31,8 +32,8 @@ export function registerPaymentsTools(client: ToastClient) {
       description: 'Add a payment to a check (cash, card, other)',
       inputSchema: z.object({
         checkGuid: z.string(),
-        amount: z.number().describe('Payment amount in cents'),
-        tipAmount: z.number().optional().describe('Tip amount in cents'),
+        amount: positiveCents().describe('Payment amount in cents'),
+        tipAmount: positiveCents().optional().describe('Tip amount in cents'),
         paymentType: z.enum(['CASH', 'CREDIT', 'GIFTCARD', 'HOUSE_ACCOUNT', 'OTHER']),
         otherPaymentTypeGuid: z.string().optional().describe('Required if paymentType is OTHER'),
         restaurantGuid: z.string().optional(),
@@ -59,8 +60,8 @@ export function registerPaymentsTools(client: ToastClient) {
       description: 'Process a refund for a payment',
       inputSchema: z.object({
         paymentGuid: z.string(),
-        refundAmount: z.number().describe('Refund amount in cents'),
-        tipRefundAmount: z.number().optional(),
+        refundAmount: positiveCents().describe('Refund amount in cents'),
+        tipRefundAmount: positiveCents().optional().describe('Tip refund amount in cents'),
         restaurantGuid: z.string().optional(),
       }),
       handler: async (args: { paymentGuid: string; refundAmount: number; tipRefundAmount?: number; restaurantGuid?: string }) => {

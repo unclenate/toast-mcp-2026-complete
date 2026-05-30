@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ToastClient } from '../clients/toast.js';
+import { positiveCents, boundedMagnitudeCents } from '../lib/monetary.js';
 import type { CashDrawer, CashEntry, CashDeposit } from '../types/index.js';
 
 /**
@@ -75,7 +76,7 @@ export function registerCashTools(client: ToastClient) {
       description: 'Record a cash paid in or paid out entry',
       inputSchema: z.object({
         drawerGuid: z.string(),
-        amount: z.number().describe('Amount in cents (positive for paid in, negative for paid out)'),
+        amount: boundedMagnitudeCents().describe('Amount in cents (positive for paid in, negative for paid out)'),
         type: z.enum(['PAID_IN', 'PAID_OUT']),
         reason: z.string().optional(),
         comment: z.string().optional(),
@@ -181,7 +182,7 @@ export function registerCashTools(client: ToastClient) {
       mutates: true,
       description: 'Record a cash deposit',
       inputSchema: z.object({
-        amount: z.number().describe('Deposit amount in cents'),
+        amount: positiveCents().describe('Deposit amount in cents'),
         date: z.string().optional().describe('ISO 8601 date (defaults to now)'),
         restaurantGuid: z.string().optional(),
       }),
