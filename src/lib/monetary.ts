@@ -43,7 +43,7 @@ export function parseMaxMonetaryCents(
   }
   const reject = {
     value: DEFAULT_MAX_MONETARY_CENTS,
-    warning: `[Toast MCP] TOAST_MAX_MONETARY_CENTS=${JSON.stringify(raw)} is not a plain positive integer (e.g. "5000000"); defaulting to ${DEFAULT_MAX_MONETARY_CENTS}`,
+    warning: `[Toast MCP] TOAST_MAX_MONETARY_CENTS=${JSON.stringify(raw)} is not a plain positive integer within safe range (e.g. "5000000"); defaulting to ${DEFAULT_MAX_MONETARY_CENTS}`,
   };
   // Reject non-strings (JS callers) and anything that isn't a bare
   // positive-integer decimal: no sign, no decimal point, no exponent,
