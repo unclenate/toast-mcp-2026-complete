@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ToastClient } from '../clients/toast.js';
+import { extractErrorInfo } from '../lib/error-info.js';
 import type { Menu, MenuGroup, MenuItem, ModifierGroup } from '../types/index.js';
 
 /**
@@ -249,14 +250,14 @@ export function registerMenusTools(client: ToastClient) {
                 { params: { restaurantGuid: restGuid } }
               );
               return { ok: true as const, itemGuid };
-            } catch (err: any) {
-              return { ok: false as const, error: err?.message ?? String(err), itemGuid };
+            } catch (err: unknown) {
+              return { ok: false as const, ...extractErrorInfo(err), itemGuid };
             }
           })
         );
 
+        const successCount = results.filter(r => r.ok).length;
         const failed = results.filter(r => !r.ok);
-        const successCount = results.length - failed.length;
 
         return {
           successCount,

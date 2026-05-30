@@ -38,7 +38,7 @@ export interface Order {
   modifiedDate: string;
   promisedDate?: string;
   channelGuid?: string;
-  source: string;
+  source?: string;
   duration?: number;
   businessDate: number;
   numberOfGuests?: number;

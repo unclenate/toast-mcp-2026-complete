@@ -37,7 +37,7 @@ export function parseReadOnly(raw: string | undefined): { value: boolean; warnin
   if (raw === 'false') return { value: false, warning: null };
   return {
     value: true,
-    warning: `[Toast MCP] TOAST_READ_ONLY=${JSON.stringify(raw)} is not "true" or "false"; defaulting to read-only mode`,
+    warning: `[Toast MCP] TOAST_READ_ONLY=${JSON.stringify(raw)} is not "true" or "false" (case-sensitive — use lowercase); defaulting to read-only mode`,
   };
 }
 
@@ -110,11 +110,11 @@ export class ToastMCPServer {
       registerCashTools(this.client),
     ];
 
-    let skipped = 0;
+    const skipped: string[] = [];
     for (const tools of toolModules) {
       for (const tool of tools) {
         if (this.readOnly && (tool as { mutates?: boolean }).mutates === true) {
-          skipped++;
+          skipped.push(tool.name);
           continue;
         }
         this.tools.set(tool.name, tool);
@@ -122,8 +122,13 @@ export class ToastMCPServer {
     }
 
     const mode = this.readOnly ? 'read-only' : 'read-write';
-    const suffix = skipped > 0 ? `, ${skipped} write tools skipped` : '';
+    const suffix = skipped.length > 0 ? `, ${skipped.length} write tools skipped` : '';
     console.error(`[Toast MCP] Registered ${this.tools.size} tools (mode: ${mode}${suffix})`);
+    if (skipped.length > 0) {
+      // Named so a contributor who accidentally tags a read tool with mutates:true
+      // can spot it in the log instead of debugging "tool not found" from the client.
+      console.error(`[Toast MCP] Skipped (read-only): ${skipped.sort().join(', ')}`);
+    }
   }
 
   private setupHandlers() {
@@ -170,9 +175,16 @@ export class ToastMCPServer {
     // Handle tool execution
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const tool = this.tools.get(request.params.name);
-      
+
       if (!tool) {
         throw new Error(`Unknown tool: ${request.params.name}`);
+      }
+
+      // Defense-in-depth: ADR-0002 gates at registration, but if a mutating
+      // tool ever reaches this.tools while readOnly is true (config injected
+      // after construction, future code path, mistagged tool), refuse the call.
+      if (this.readOnly && (tool as { mutates?: boolean }).mutates === true) {
+        throw new Error(`Tool '${tool.name}' is a write tool and TOAST_READ_ONLY is in effect`);
       }
 
       try {
