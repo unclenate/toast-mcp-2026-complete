@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT OR Apache-2.0
 # ADR-0002: Read-Only Mode Default via `TOAST_READ_ONLY` Env Flag
 
 **Status:** Accepted
-**Date:** 2026-05-28 (proposed); 2026-05-29 (accepted)
+**Date:** 2026-05-29
 **Author:** @unclenate
 **Milestone:** M2 (Track 3)
 **Mitigates:** RISK-006
@@ -71,12 +71,12 @@ Mixed modules rule out module-level gating: cutting `cash.ts` entirely to gain r
 - The tool-record type change lives at whichever file defines the shape that every `registerXxxTools` function returns. If no shared interface exists today, this ADR also authorizes adding one (`src/types/tool.ts` or similar).
 - The 21 sites to tag are enumerated in the Context table above and verifiable via the exact grep command shown there.
 - Implementation lands as a single workspace edit reviewed under Tier 2 discipline (no autonomous git write to `src/`); the maintainer commits.
-- Once landed, `docs/mcp/risk-register.md` updates RISK-006 row to reference this ADR as mitigation, and `docs/mcp/tool-registry.md` annotates each of the 21 write tools with a `read-only mode: skipped` note.
+- Once landed, `docs/mcp/risk-register.md` updates RISK-006 row to reference this ADR as mitigation. `docs/mcp/tool-registry.md` already enumerates the 21 write tools (its top section explicitly notes "gated read-only-by-default in v0"); a follow-up Tier-3 doc commit after the implementation PR merges will add an explicit per-row `read-only mode: skipped` annotation.
 
 ## Companion Satisfiers
 
 - `docs/mcp/risk-register.md` — RISK-006 row references this ADR as mitigation
-- `docs/project/change-log.md` — 2026-05-28 row: "ADR-0002 proposed"; further row on acceptance
+- `docs/project/change-log.md` — 2026-05-29 row recording the acceptance
 - `docs/project/milestones.md` — M2 row updated to "in progress" when implementation begins
 - `docs/deployment/self-hosting-guide.md` — already references `TOAST_READ_ONLY=true` as default; semantics now backed by code
 

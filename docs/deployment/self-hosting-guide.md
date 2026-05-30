@@ -35,7 +35,7 @@ npm install
 npm run build
 ```
 
-> **Note (2026-05-28):** The upstream lockfile has drift against `package.json` (RISK-009 — see `docs/mcp/risk-register.md` once added). If `npm ci` fails on a clean clone with `EUSAGE`, use `npm install` to regenerate the lock. This will be permanently resolved once Track 2 M5 ships with a CI-verified lock.
+> **Note (2026-05-28):** The upstream lockfile has drift against `package.json` (RISK-009 — see `docs/mcp/risk-register.md`). If `npm ci` fails on a clean clone with `EUSAGE`, use `npm install` to regenerate the lock. This will be permanently resolved once Track 2 M5 ships with a CI-verified lock.
 
 ## Configuration
 
@@ -95,4 +95,4 @@ Found a security issue? Open a GitHub Security Advisory (private), not a public 
 
 ## Known risks (do not deploy in production without reading)
 
-See `docs/mcp/risk-register.md` — 8 open risks as of 2026-05-28, 3 of which are high-severity. Track 3 is the mitigation path; until that ships, this server should run only in trusted environments against sandbox credentials.
+See `docs/mcp/risk-register.md` — 9 open risks as of 2026-05-29, 3 of which are high-severity. Track 3 is the mitigation path; until that ships, this server should run only in trusted environments against sandbox credentials.
