@@ -46,6 +46,9 @@ Set the following environment variables. **In stdio mode** (Claude Desktop / Cla
 - `TOAST_RESTAURANT_GUID` — target restaurant GUID (placeholder until set)
 - `TOAST_ENVIRONMENT` — `sandbox` or `production` (default: `production` in the current upstream code; will be revisited under a future ADR)
 - `TOAST_READ_ONLY` — `true` (default in v0 once ADR-0002 lands); explicit `false` opts into the 21 write tools
+- `TOAST_MAX_MONETARY_CENTS` — upper bound for monetary inputs, in cents (default `10000000` = $100,000). Plain positive integer only; malformed values warn and fall back to the default (ADR-0003).
+- `TOAST_MCP_HOST` — *(HTTP mode only)* interface to bind (default `127.0.0.1`, loopback). Set to `0.0.0.0` to expose on all interfaces — only on a trusted network (ADR-0004).
+- `TOAST_CORS_ORIGINS` — *(HTTP mode only)* comma-separated list of allowed browser origins. Unset (default) means no cross-origin requests are allowed; the bundled same-origin UI is unaffected (ADR-0004).
 
 **Never commit any of these values.** They are credential-grade. See `docs/operating-principles.md` principle 2.
 
@@ -77,7 +80,23 @@ Restart Claude Desktop after editing. The server's startup log line (visible in 
 
 ### HTTP mode
 
-Not recommended in v0. The current `0.0.0.0` default bind (RISK-003) and wildcard CORS (RISK-004) make this unsuitable for production. Track 3 M4 changes the defaults.
+Still not recommended in v0 — the `/api/tools/:toolName` endpoint is a stub that returns "not yet implemented", so there is nothing functional to reach over HTTP yet. But as of ADR-0004 (M4) the transport defaults are now safe-by-construction rather than wrong-by-construction:
+
+- **Bind:** loopback `127.0.0.1` by default. The server is not reachable from the LAN unless you explicitly set `TOAST_MCP_HOST=0.0.0.0` (or a specific interface IP) — and only do that on a trusted network.
+- **CORS:** deny-all by default. No `Access-Control-Allow-Origin` header is emitted at all unless you set `TOAST_CORS_ORIGINS` to a comma-separated allow-list. The bundled same-origin `/apps` UI is unaffected, because same-origin requests do not use CORS.
+- **`/health`:** returns only `{ "status": "ok" }` — no service name or version string, so anonymous probes learn only that the process is alive.
+
+To opt into LAN exposure with a specific browser origin allowed:
+
+```bash
+TOAST_MCP_MODE=http \
+TOAST_MCP_PORT=3000 \
+TOAST_MCP_HOST=0.0.0.0 \
+TOAST_CORS_ORIGINS="https://your-trusted-app.example" \
+node dist/main.js
+```
+
+The startup log line names the resolved host so the binding is visible at a glance. See `docs/adr/ADR-0004-http-transport-hardening.md` for the full rationale (mitigates RISK-003, RISK-004, RISK-005).
 
 ## Upgrading
 
@@ -95,4 +114,4 @@ Found a security issue? Open a GitHub Security Advisory (private), not a public 
 
 ## Known risks (do not deploy in production without reading)
 
-See `docs/mcp/risk-register.md` — 9 open risks as of 2026-05-29, 3 of which are high-severity. Track 3 is the mitigation path; until that ships, this server should run only in trusted environments against sandbox credentials.
+See `docs/mcp/risk-register.md` — 5 open risks as of 2026-05-31, 1 of which is high-severity (RISK-003, HTTP `0.0.0.0` bind — design accepted in ADR-0004, implementation pending). Track 3 is the mitigation path; until it fully ships, this server should run only in trusted environments against sandbox credentials.
